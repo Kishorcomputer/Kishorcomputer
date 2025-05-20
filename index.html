@@ -1,137 +1,115 @@
+
 <!DOCTYPE html>
 <html lang="bn">
 <head>
   <meta charset="UTF-8" />
-  <title>Kishor Computer Invoice App v2</title>
+  <title>Kishor Computer Invoice System v2</title>
   <style>
-    body { font-family: 'Siyam Rupali', sans-serif; max-width: 900px; margin: auto; background: #f9f9f9; padding: 20px; }
-    h2, h4 { text-align: center; margin: 5px 0; }
-    table { width: 100%; border-collapse: collapse; background: #fff; margin-top: 20px; }
-    th, td { border: 1px solid #000; padding: 8px; text-align: center; }
-    input[type="text"], input[type="number"], input[type="date"] { width: 100%; padding: 5px; box-sizing: border-box; }
-    .buttons { margin-top: 15px; text-align: center; }
-    .signatures div { float: left; width: 50%; text-align: center; margin-top: 50px; }
-    .invoice-box { background: white; padding: 20px; box-shadow: 0 0 10px #ccc; }
-    #logoPreview { max-height: 80px; margin-bottom: 10px; display: block; margin-left: auto; margin-right: auto; }
-    #qrCode { margin-top: 10px; }
-    @media print {
-      body { background: white; }
-      .no-print { display: none; }
-    }
+    body { font-family: 'Siyam Rupali', sans-serif; padding: 20px; max-width: 900px; margin: auto; background: #f7f7f7; }
+    h2, h4 { text-align: center; margin: 0; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; background: #fff; }
+    th, td { border: 1px solid #000; padding: 6px; text-align: center; }
+    .section { margin-top: 20px; }
+    input[type="text"], input[type="number"], input[type="date"], select { width: 100%; padding: 5px; }
+    .buttons { margin-top: 20px; text-align: center; }
+    .signatures div { float: left; width: 50%; text-align: center; margin-top: 40px; }
+    .invoice-box { background: white; padding: 20px; box-shadow: 0 0 5px #ccc; }
+    .logo { max-height: 80px; display: block; margin: 0 auto 10px; }
+    @media print { body { background: white; } .no-print { display: none; } }
   </style>
 </head>
 <body>
   <div class="invoice-box">
-    <img id="logoPreview" src="" alt="Logo" />
+    <img src="" id="logoPreview" class="logo" alt="Logo" />
     <h2>Kishor Computer</h2>
     <h4>অনলাইন সেবা, ফটোকপি, মেইল, কম্পোজ, ল্যামেনেটিং</h4>
-    <p style="text-align:center;">
-      Malironko Bazar, Louhajong, Munshiganj<br />
-      Email: kishorcomputerbd@gmail.com
-    </p>
+    <p style="text-align:center;">Malironko Bazar, Louhajong, Munshiganj<br>Email: kishorcomputerbd@gmail.com</p>
 
-    <div>
+    <div class="section">
       <strong>Invoice ID:</strong> <span id="invoiceId"></span><br />
       <strong>Date:</strong> <input type="date" id="invoiceDate" />
     </div>
 
-    <div style="margin-top:10px;">
+    <div class="section">
       <strong>Customer Name:</strong> <input type="text" id="customerName" />
-      <strong>Mobile:</strong> <input type="text" id="customerPhone" />
+      <strong>Customer ID/Phone:</strong> <input type="text" id="customerPhone" />
       <strong>Address:</strong> <input type="text" id="customerAddress" />
     </div>
 
-    <table id="invoiceTable" aria-label="Invoice items">
+    <div class="section">
+      <label>Service Description:</label>
+      <textarea id="serviceDesc" rows="2" style="width:100%;" placeholder="আপনি এখানে সার্ভিস এর নাম ও বিবরণ লিখতে পারবেন...">অনলাইন সেবা, ফটোকপি, মেইল, কম্পোজ, ল্যামেনেটিং</textarea>
+    </div>
+
+    <table id="invoiceTable">
       <thead>
         <tr>
           <th>বিবরণ</th>
           <th>পরিমাণ</th>
           <th>দর (৳)</th>
           <th>মোট (৳)</th>
-          <th class="no-print">অপশন</th>
         </tr>
       </thead>
       <tbody id="itemsBody">
         <tr>
-          <td><input type="text" placeholder="সেবা/পণ্যের নাম লিখুন" /></td>
-          <td><input type="number" value="1" min="0" onchange="calculateTotal()" /></td>
-          <td><input type="number" value="0" min="0" onchange="calculateTotal()" /></td>
-          <td class="totalCell">0.00</td>
-          <td class="no-print"><button onclick="removeRow(this)">❌</button></td>
+          <td><input type="text" value="ফটোকপি" /></td>
+          <td><input type="number" value="1" onchange="calculateTotal()" /></td>
+          <td><input type="number" value="2" onchange="calculateTotal()" /></td>
+          <td class="totalCell">2</td>
         </tr>
       </tbody>
     </table>
 
-    <button class="no-print" onclick="addRow()">+ নতুন সার্ভিস/পণ্য যুক্ত করুন</button>
-
     <div class="buttons no-print">
-      <button onclick="saveInvoice()">💾 Save Invoice</button>
-      <button onclick="downloadPDF()">📥 Download PDF</button>
-      <button onclick="window.print()">🖨️ Print Invoice</button>
+      <button onclick="addRow()">+ Add Item</button>
+      <button onclick="saveInvoice()">💾 Save</button>
+      <button onclick="downloadInvoices()">⬇ Export All</button>
+      <button onclick="window.print()">🖨️ Print (with QR)</button>
+      <input type="file" id="logoUpload" accept="image/*" class="no-print" onchange="uploadLogo(event)" />
     </div>
 
     <h3 style="text-align:right;">
       মোট টাকা: <span id="grandTotal">৳0.00</span><br />
-      <small>টাকার অঙ্ক কথায়: <span id="inWords"></span></small>
+      জমা: <input type="number" id="paidAmount" value="0" onchange="calculateDue()" style="width:100px;" />৳<br />
+      বাকী: <span id="dueAmount">৳0.00</span>
     </h3>
-
-    <h4>অগ্রিম জমা (৳): <input type="number" id="paidAmount" value="0" min="0" onchange="calculateDue()" /></h4>
-    <h4>বাকী টাকা: <span id="dueAmount">৳0.00</span></h4>
+    <p><strong>টাকার পরিমান কথায়:</strong> <span id="inWords"></span> টাকা মাত্র</p>
 
     <div class="signatures">
       <div>----------------------<br />ক্রেতার স্বাক্ষর</div>
       <div>----------------------<br />বিক্রেতার স্বাক্ষর</div>
     </div>
 
-    <div id="qrCode"></div>
+    <div id="qrcode" style="margin-top: 20px; text-align:center;"></div>
   </div>
 
-  <div class="section no-print" style="margin-top: 40px;">
-    <h3>🔍 Invoice Search (নাম অথবা মোবাইল দ্বারা)</h3>
-    <input type="text" id="searchInvoice" placeholder="কাস্টমার নাম/মোবাইল লিখুন..." onkeyup="searchInvoice()" style="width: 100%; padding: 8px;" />
-    <ul id="invoiceList" style="list-style: none; padding: 0; margin-top: 10px;"></ul>
+  <div class="section no-print">
+    <h3>🔍 Invoice Search (By Customer ID/Phone)</h3>
+    <input type="text" id="searchCustomer" placeholder="Enter customer ID or phone..." onkeyup="searchInvoice()" />
+    <ul id="invoiceList"></ul>
   </div>
 
-  <div class="no-print" style="margin-top:20px;">
-    <label for="logoUpload">লোগো আপলোড করুন: </label>
-    <input type="file" id="logoUpload" accept="image/*" onchange="previewLogo(event)" />
-  </div>
-
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
   <script>
-    // Initialization
+    // Initialize
     document.getElementById("invoiceDate").valueAsDate = new Date();
     let invoiceId = "INV" + Date.now().toString().slice(-6);
     document.getElementById("invoiceId").innerText = invoiceId;
     document.getElementById("paidAmount").value = 0;
 
-    // Add new row
     function addRow() {
       const tbody = document.getElementById("itemsBody");
       const row = tbody.rows[0].cloneNode(true);
-      row.querySelectorAll("input").forEach(input => (input.value = input.type === "number" ? (input.min || 0) : ""));
-      row.querySelector(".totalCell").innerText = "0.00";
+      row.querySelectorAll("input").forEach((input) => (input.value = ""));
+      row.querySelector(".totalCell").innerText = "0";
       tbody.appendChild(row);
       calculateTotal();
     }
 
-    // Remove row
-    function removeRow(btn) {
-      const tbody = document.getElementById("itemsBody");
-      if (tbody.rows.length > 1) {
-        btn.closest("tr").remove();
-        calculateTotal();
-      } else {
-        alert("কমপক্ষে একটি সার্ভিস থাকতে হবে।");
-      }
-    }
-
-    // Calculate totals
     function calculateTotal() {
       let grandTotal = 0;
       const rows = document.querySelectorAll("#itemsBody tr");
-      rows.forEach(row => {
+      rows.forEach((row) => {
         const qty = parseFloat(row.cells[1].querySelector("input").value) || 0;
         const price = parseFloat(row.cells[2].querySelector("input").value) || 0;
         const total = qty * price;
@@ -139,26 +117,156 @@
         grandTotal += total;
       });
       document.getElementById("grandTotal").innerText = "৳" + grandTotal.toFixed(2);
-      document.getElementById("inWords").innerText = numberToWords(grandTotal);
       calculateDue();
-      generateQRCode();
+      document.getElementById("inWords").innerText = numberToWords(grandTotal);
     }
 
-    // Calculate due amount
     function calculateDue() {
-      const grandTotal = parseFloat(document.getElementById("grandTotal").innerText.replace(/[^\d.-]/g, "")) || 0;
+      const grandTotal = parseFloat(document.getElementById("grandTotal").innerText.replace("৳", "")) || 0;
       const paid = parseFloat(document.getElementById("paidAmount").value) || 0;
       let due = grandTotal - paid;
-      if (due < 0) due = 0;
+      due = due < 0 ? 0 : due;
       document.getElementById("dueAmount").innerText = "৳" + due.toFixed(2);
     }
 
-    // Number to Bangla words (simplified)
+    // Number to Bangla words (basic for demonstration)
     function numberToWords(num) {
       if (num === 0) return "শূন্য";
-      const digits = [
-        "", "এক", "দুই", "তিন", "চার", "পাঁচ", "ছয়", "সাত", "আট", "নয়",
-      ];
-      const tens = [
-        "", "", "বিশ", "ত্রিশ", "চল্লিশ", "পঞ্চাশ", "ষাট", "সত্তর", "আশি", "নব্বই",
-      ​:contentReference[oaicite:0]{index=0}​
+      const banglaNumbers = ["শূন্য", "এক", "দুই", "তিন", "চার", "পাঁচ", "ছয়", "সাত", "আট", "নয়"];
+      if (num < 10) return banglaNumbers[Math.floor(num)];
+      return num.toFixed(2) + " (সংখ্যায়)";
+    }
+
+    // Save invoice in localStorage
+    function saveInvoice() {
+      const data = {
+        id: invoiceId,
+        date: document.getElementById("invoiceDate").value,
+        name: document.getElementById("customerName").value.trim(),
+        phone: document.getElementById("customerPhone").value.trim(),
+        address: document.getElementById("customerAddress").value.trim(),
+        serviceDesc: document.getElementById("serviceDesc").value.trim(),
+        items: [],
+        total: parseFloat(document.getElementById("grandTotal").innerText.replace("৳", "")),
+        paid: parseFloat(document.getElementById("paidAmount").value),
+        due: parseFloat(document.getElementById("dueAmount").innerText.replace("৳", "")),
+        logo: document.getElementById("logoPreview").src || "",
+      };
+
+      document.querySelectorAll("#itemsBody tr").forEach((row) => {
+        const desc = row.cells[0].querySelector("input").value.trim();
+        const qty = parseFloat(row.cells[1].querySelector("input").value) || 0;
+        const price = parseFloat(row.cells[2].querySelector("input").value) || 0;
+        const total = qty * price;
+        data.items.push({ desc, qty, price, total });
+      });
+
+      let saved = JSON.parse(localStorage.getItem("invoices") || "[]");
+      saved.push(data);
+      localStorage.setItem("invoices", JSON.stringify(saved));
+      alert("Invoice saved!");
+      generateQRCode();
+      listInvoices();
+    }
+
+    // List saved invoices
+    function listInvoices() {
+      const saved = JSON.parse(localStorage.getItem("invoices") || "[]");
+      const ul = document.getElementById("invoiceList");
+      ul.innerHTML = "";
+      saved.forEach((inv, idx) => {
+        const li = document.createElement("li");
+        li.innerHTML = `📄 <b>${inv.name}</b> (${inv.phone || inv.id}) - <b>৳${inv.total.toFixed(2)}</b> <button onclick="loadInvoice(${idx})">Load</button>`;
+        ul.appendChild(li);
+      });
+    }
+
+    // Search invoices
+    function searchInvoice() {
+      const query = document.getElementById("searchCustomer").value.toLowerCase();
+      const saved = JSON.parse(localStorage.getItem("invoices") || "[]");
+      const ul = document.getElementById("invoiceList");
+      ul.innerHTML = "";
+      saved
+        .filter((inv) => (inv.phone || "").toLowerCase().includes(query) || (inv.id || "").toLowerCase().includes(query))
+        .forEach((inv, idx) => {
+          const li = document.createElement("li");
+          li.innerHTML = `📄 <b>${inv.name}</b> (${inv.phone || inv.id}) - <b>৳${inv.total.toFixed(2)}</b> <button onclick="loadInvoice(${idx})">Load</button>`;
+          ul.appendChild(li);
+        });
+    }
+
+    // Load invoice by index
+    function loadInvoice(idx) {
+      const saved = JSON.parse(localStorage.getItem("invoices") || "[]");
+      if (!saved[idx]) return alert("Invoice not found");
+      const inv = saved[idx];
+      invoiceId = inv.id || invoiceId;
+      document.getElementById("invoiceId").innerText = invoiceId;
+      document.getElementById("invoiceDate").value = inv.date;
+      document.getElementById("customerName").value = inv.name;
+      document.getElementById("customerPhone").value = inv.phone;
+      document.getElementById("customerAddress").value = inv.address;
+      document.getElementById("serviceDesc").value = inv.serviceDesc || "";
+      const tbody = document.getElementById("itemsBody");
+      tbody.innerHTML = "";
+      inv.items.forEach((item) => {
+        const row = document.createElement("tr");
+        row.innerHTML = `<td><input type="text" value="${item.desc}" /></td><td><input type="number" value="${item.qty}" onchange="calculateTotal()" /></td><td><input type="number" value="${item.price}" onchange="calculateTotal()" /></td><td class="totalCell">${(item.qty*item.price).toFixed(2)}</td>`;
+        tbody.appendChild(row);
+      });
+      calculateTotal();
+      document.getElementById("paidAmount").value = inv.paid || 0;
+      calculateDue();
+      if(inv.logo){
+        document.getElementById("logoPreview").src = inv.logo;
+      } else {
+        document.getElementById("logoPreview").src = "";
+      }
+      generateQRCode();
+    }
+
+    // Upload logo preview
+    function uploadLogo(event) {
+      const reader = new FileReader();
+      reader.onload = function () {
+        document.getElementById("logoPreview").src = reader.result;
+      };
+      reader.readAsDataURL(event.target.files[0]);
+    }
+
+    // Export all invoices as JSON file
+    function downloadInvoices() {
+      const saved = localStorage.getItem("invoices") || "[]";
+      const blob = new Blob([saved], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "kishor_invoices.json";
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // Generate QR code with invoice info
+    function generateQRCode() {
+      const inv = {
+        id: invoiceId,
+        date: document.getElementById("invoiceDate").value,
+        name: document.getElementById("customerName").value,
+        phone: document.getElementById("customerPhone").value,
+        total: document.getElementById("grandTotal").innerText,
+        due: document.getElementById("dueAmount").innerText,
+      };
+      const qrText = JSON.stringify(inv);
+      const qrContainer = document.getElementById("qrcode");
+      qrContainer.innerHTML = "";
+      QRCode.toCanvas(qrContainer, qrText, { width: 150 }, function (error) {
+        if (error) console.error(error);
+      });
+    }
+
+    calculateTotal();
+    listInvoices();
+  </script>
+</body>
+</html>
