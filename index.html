@@ -1,143 +1,164 @@
 <!DOCTYPE html>
 <html lang="bn">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Kishor Computer Invoice</title>
-<style>
-  body { font-family: Arial, sans-serif; max-width: 800px; margin: auto; padding: 20px; }
-  h1, h2 { text-align: center; }
-  table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-  table, th, td { border: 1px solid #333; }
-  th, td { padding: 8px; text-align: center; }
-  input, select, textarea { width: 100%; padding: 5px; margin: 4px 0; box-sizing: border-box; }
-  .signature { margin-top: 30px; display: flex; justify-content: space-between; }
-  .sig-box { border: 1px solid #000; width: 45%; height: 80px; }
-  button { margin-top: 15px; padding: 10px 20px; font-size: 16px; }
-</style>
+  <meta charset="UTF-8" />
+  <title>Kishor Computer Invoice App v2</title>
+  <style>
+    body { font-family: 'Siyam Rupali', sans-serif; max-width: 900px; margin: auto; background: #f9f9f9; padding: 20px; }
+    h2, h4 { text-align: center; margin: 5px 0; }
+    table { width: 100%; border-collapse: collapse; background: #fff; margin-top: 20px; }
+    th, td { border: 1px solid #000; padding: 8px; text-align: center; }
+    input[type="text"], input[type="number"], input[type="date"] { width: 100%; padding: 5px; box-sizing: border-box; }
+    .buttons { margin-top: 15px; text-align: center; }
+    .signatures div { float: left; width: 50%; text-align: center; margin-top: 50px; }
+    .invoice-box { background: white; padding: 20px; box-shadow: 0 0 10px #ccc; }
+    #logoPreview { max-height: 80px; margin-bottom: 10px; display: block; margin-left: auto; margin-right: auto; }
+    #qrCode { margin-top: 10px; }
+    @media print {
+      body { background: white; }
+      .no-print { display: none; }
+    }
+  </style>
 </head>
 <body>
+  <div class="invoice-box">
+    <img id="logoPreview" src="" alt="Logo" />
+    <h2>Kishor Computer</h2>
+    <h4>অনলাইন সেবা, ফটোকপি, মেইল, কম্পোজ, ল্যামেনেটিং</h4>
+    <p style="text-align:center;">
+      Malironko Bazar, Louhajong, Munshiganj<br />
+      Email: kishorcomputerbd@gmail.com
+    </p>
 
-<h1>Kishor Computer</h1>
-<p style="text-align:center;">Malironko Bazar, Louhajong, Munshiganj<br>
-Email: kishorcomputerbd@gmail.com</p>
-<hr>
+    <div>
+      <strong>Invoice ID:</strong> <span id="invoiceId"></span><br />
+      <strong>Date:</strong> <input type="date" id="invoiceDate" />
+    </div>
 
-<p><b>Invoice ID:</b> <span id="invoiceId"></span></p>
-<p><b>তারিখ:</b> <input type="date" id="date" /></p>
-<p><b>ক্রেতার নাম:</b> <input type="text" id="customerName" /></p>
+    <div style="margin-top:10px;">
+      <strong>Customer Name:</strong> <input type="text" id="customerName" />
+      <strong>Mobile:</strong> <input type="text" id="customerPhone" />
+      <strong>Address:</strong> <input type="text" id="customerAddress" />
+    </div>
 
-<table>
-  <thead>
-    <tr>
-      <th>সেবা</th>
-      <th>পরিমাণ</th>
-      <th>দাম (প্রতি ইউনিট)</th>
-      <th>মোট</th>
-    </tr>
-  </thead>
-  <tbody id="serviceRows">
-    <tr>
-      <td>
-        <select id="service1" onchange="updateTotal(1)">
-          <option value="">--সেবা নির্বাচন করুন--</option>
-          <option value="Online Service">অনলাইন সেবা</option>
-          <option value="Photocopy">ফটোকপি</option>
-          <option value="Mail">মেইল</option>
-          <option value="Compose">কম্পোজ</option>
-          <option value="Laminating">ল্যামিনেটিং</option>
-        </select>
-      </td>
-      <td><input type="number" id="qty1" value="1" min="1" onchange="updateTotal(1)" /></td>
-      <td><input type="number" id="price1" value="0" min="0" onchange="updateTotal(1)" /></td>
-      <td><span id="total1">0</span></td>
-    </tr>
-  </tbody>
-</table>
+    <table id="invoiceTable" aria-label="Invoice items">
+      <thead>
+        <tr>
+          <th>বিবরণ</th>
+          <th>পরিমাণ</th>
+          <th>দর (৳)</th>
+          <th>মোট (৳)</th>
+          <th class="no-print">অপশন</th>
+        </tr>
+      </thead>
+      <tbody id="itemsBody">
+        <tr>
+          <td><input type="text" placeholder="সেবা/পণ্যের নাম লিখুন" /></td>
+          <td><input type="number" value="1" min="0" onchange="calculateTotal()" /></td>
+          <td><input type="number" value="0" min="0" onchange="calculateTotal()" /></td>
+          <td class="totalCell">0.00</td>
+          <td class="no-print"><button onclick="removeRow(this)">❌</button></td>
+        </tr>
+      </tbody>
+    </table>
 
-<button onclick="addRow()">আরো সেবা যোগ করুন</button>
+    <button class="no-print" onclick="addRow()">+ নতুন সার্ভিস/পণ্য যুক্ত করুন</button>
 
-<h3>মোট: <span id="grandTotal">0</span> টাকা</h3>
-<p><b>টাকার পরিমাণ (কথায়):</b> <span id="amountInWords"></span></p>
+    <div class="buttons no-print">
+      <button onclick="saveInvoice()">💾 Save Invoice</button>
+      <button onclick="downloadPDF()">📥 Download PDF</button>
+      <button onclick="window.print()">🖨️ Print Invoice</button>
+    </div>
 
-<div class="signature">
-  <div>
-    <p>ক্রেতার স্বাক্ষর:</p>
-    <div class="sig-box" contenteditable="true"></div>
+    <h3 style="text-align:right;">
+      মোট টাকা: <span id="grandTotal">৳0.00</span><br />
+      <small>টাকার অঙ্ক কথায়: <span id="inWords"></span></small>
+    </h3>
+
+    <h4>অগ্রিম জমা (৳): <input type="number" id="paidAmount" value="0" min="0" onchange="calculateDue()" /></h4>
+    <h4>বাকী টাকা: <span id="dueAmount">৳0.00</span></h4>
+
+    <div class="signatures">
+      <div>----------------------<br />ক্রেতার স্বাক্ষর</div>
+      <div>----------------------<br />বিক্রেতার স্বাক্ষর</div>
+    </div>
+
+    <div id="qrCode"></div>
   </div>
-  <div>
-    <p>বিক্রেতার স্বাক্ষর:</p>
-    <div class="sig-box" contenteditable="true"></div>
+
+  <div class="section no-print" style="margin-top: 40px;">
+    <h3>🔍 Invoice Search (নাম অথবা মোবাইল দ্বারা)</h3>
+    <input type="text" id="searchInvoice" placeholder="কাস্টমার নাম/মোবাইল লিখুন..." onkeyup="searchInvoice()" style="width: 100%; padding: 8px;" />
+    <ul id="invoiceList" style="list-style: none; padding: 0; margin-top: 10px;"></ul>
   </div>
-</div>
 
-<button onclick="printInvoice()">প্রিন্ট করুন</button>
+  <div class="no-print" style="margin-top:20px;">
+    <label for="logoUpload">লোগো আপলোড করুন: </label>
+    <input type="file" id="logoUpload" accept="image/*" onchange="previewLogo(event)" />
+  </div>
 
-<script>
-  let invoiceCounter = localStorage.getItem('invoiceCounter') || 1;
-  document.getElementById('invoiceId').textContent = 'KISHOR-' + invoiceCounter.toString().padStart(4, '0');
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+  <script>
+    // Initialization
+    document.getElementById("invoiceDate").valueAsDate = new Date();
+    let invoiceId = "INV" + Date.now().toString().slice(-6);
+    document.getElementById("invoiceId").innerText = invoiceId;
+    document.getElementById("paidAmount").value = 0;
 
-  function updateTotal(rowNum) {
-    let qty = Number(document.getElementById('qty' + rowNum).value);
-    let price = Number(document.getElementById('price' + rowNum).value);
-    let total = qty * price;
-    document.getElementById('total' + rowNum).textContent = total.toFixed(2);
-    updateGrandTotal();
-  }
+    // Add new row
+    function addRow() {
+      const tbody = document.getElementById("itemsBody");
+      const row = tbody.rows[0].cloneNode(true);
+      row.querySelectorAll("input").forEach(input => (input.value = input.type === "number" ? (input.min || 0) : ""));
+      row.querySelector(".totalCell").innerText = "0.00";
+      tbody.appendChild(row);
+      calculateTotal();
+    }
 
-  function updateGrandTotal() {
-    let total = 0;
-    const rows = document.querySelectorAll('#serviceRows tr');
-    rows.forEach((row, index) => {
-      let t = Number(document.getElementById('total' + (index+1)).textContent);
-      total += t;
-    });
-    document.getElementById('grandTotal').textContent = total.toFixed(2);
-    document.getElementById('amountInWords').textContent = convertNumberToBanglaWords(total);
-  }
+    // Remove row
+    function removeRow(btn) {
+      const tbody = document.getElementById("itemsBody");
+      if (tbody.rows.length > 1) {
+        btn.closest("tr").remove();
+        calculateTotal();
+      } else {
+        alert("কমপক্ষে একটি সার্ভিস থাকতে হবে।");
+      }
+    }
 
-  function addRow() {
-    const tbody = document.getElementById('serviceRows');
-    const rowCount = tbody.rows.length + 1;
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>
-        <select id="service${rowCount}" onchange="updateTotal(${rowCount})">
-          <option value="">--সেবা নির্বাচন করুন--</option>
-          <option value="Online Service">অনলাইন সেবা</option>
-          <option value="Photocopy">ফটোকপি</option>
-          <option value="Mail">মেইল</option>
-          <option value="Compose">কম্পোজ</option>
-          <option value="Laminating">ল্যামিনেটিং</option>
-        </select>
-      </td>
-      <td><input type="number" id="qty${rowCount}" value="1" min="1" onchange="updateTotal(${rowCount})" /></td>
-      <td><input type="number" id="price${rowCount}" value="0" min="0" onchange="updateTotal(${rowCount})" /></td>
-      <td><span id="total${rowCount}">0</span></td>
-    `;
-    tbody.appendChild(tr);
-  }
+    // Calculate totals
+    function calculateTotal() {
+      let grandTotal = 0;
+      const rows = document.querySelectorAll("#itemsBody tr");
+      rows.forEach(row => {
+        const qty = parseFloat(row.cells[1].querySelector("input").value) || 0;
+        const price = parseFloat(row.cells[2].querySelector("input").value) || 0;
+        const total = qty * price;
+        row.cells[3].innerText = total.toFixed(2);
+        grandTotal += total;
+      });
+      document.getElementById("grandTotal").innerText = "৳" + grandTotal.toFixed(2);
+      document.getElementById("inWords").innerText = numberToWords(grandTotal);
+      calculateDue();
+      generateQRCode();
+    }
 
-  function convertNumberToBanglaWords(number) {
-    const words = ['শূন্য', 'এক', 'দুই', 'তিন', 'চার', 'পাঁচ', 'ছয়', 'সাত', 'আট', 'নয়', 'দশ', 'এগারো', 'বারো', 'তেরো', 'চৌদ্দ', 'পনেরো', 'ষোল', 'সতেরো', 'আঠারো', 'উনিশ', 'বিশ'];
-    if (number === 0) return words[0];
-    if (number <= 20) return words[number];
-    return number.toFixed(2) + ' টাকা';
-  }
+    // Calculate due amount
+    function calculateDue() {
+      const grandTotal = parseFloat(document.getElementById("grandTotal").innerText.replace(/[^\d.-]/g, "")) || 0;
+      const paid = parseFloat(document.getElementById("paidAmount").value) || 0;
+      let due = grandTotal - paid;
+      if (due < 0) due = 0;
+      document.getElementById("dueAmount").innerText = "৳" + due.toFixed(2);
+    }
 
-  function printInvoice() {
-    window.print();
-    incrementInvoiceId();
-  }
-
-  function incrementInvoiceId() {
-    invoiceCounter = parseInt(invoiceCounter) + 1;
-    localStorage.setItem('invoiceCounter', invoiceCounter);
-    document.getElementById('invoiceId').textContent = 'KISHOR-' + invoiceCounter.toString().padStart(4, '0');
-  }
-
-  updateGrandTotal();
-</script>
-
-</body>
-</html>
+    // Number to Bangla words (simplified)
+    function numberToWords(num) {
+      if (num === 0) return "শূন্য";
+      const digits = [
+        "", "এক", "দুই", "তিন", "চার", "পাঁচ", "ছয়", "সাত", "আট", "নয়",
+      ];
+      const tens = [
+        "", "", "বিশ", "ত্রিশ", "চল্লিশ", "পঞ্চাশ", "ষাট", "সত্তর", "আশি", "নব্বই",
+      ​:contentReference[oaicite:0]{index=0}​
